@@ -11,16 +11,19 @@ export default function ProductForm({
   existingPrice,
   existingImages,
   existingCategory,
+  existingProperties,
 }) {
   const [title, setTitle] = useState(existingTitle || "");
   const [description, setDescription] = useState(existingDescription || "");
   const [price, setPrice] = useState(existingPrice || "");
   const [category, setCategory] = useState(existingCategory || "");
+  const [productProperties, setProductProperties] = useState(
+    existingProperties || {}
+  );
   const [images, setImages] = useState(existingImages || []);
   const [goToProducts, setGoToProducts] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [categories, setCategories] = useState([]);
-
   const router = useRouter();
 
   useEffect(() => {
@@ -29,7 +32,15 @@ export default function ProductForm({
 
   const saveProduct = async (e) => {
     e.preventDefault();
-    const newProduct = { title, description, price, images, category };
+    const newProduct = {
+      title,
+      description,
+      price,
+      images,
+      category,
+      properties: productProperties,
+    };
+
     if (_id) {
       // update
       await axios.put("/api/products", { ...newProduct, _id });
@@ -65,6 +76,27 @@ export default function ProductForm({
     router.push("/products");
   }
 
+  function setProductProp(propName, value) {
+    setProductProperties((prev) => {
+      const newProductProps = { ...prev };
+      newProductProps[propName] = value;
+      return newProductProps;
+    });
+  }
+
+  const propertiesToFill = [];
+  if (categories.length > 0 && category) {
+    let catInfo = categories.find(({ _id }) => _id === category);
+    propertiesToFill.push(...catInfo.properties);
+    while (catInfo?.parent?._id) {
+      const parentCat = categories.find(
+        ({ _id }) => _id === catInfo?.parent?._id
+      );
+      propertiesToFill.push(...parentCat.properties);
+      catInfo = parentCat;
+    }
+  }
+
   return (
     <form onSubmit={saveProduct}>
       <label>Product name</label>
@@ -84,6 +116,22 @@ export default function ProductForm({
             </option>
           ))}
       </select>
+      {propertiesToFill.length > 0 &&
+        propertiesToFill.map((p) => (
+          <div className="flex gap-1" key={p.name}>
+            <div>{p.name}</div>
+            <select
+              value={productProperties[p.name]}
+              onChange={(e) => setProductProp(p.name, e.target.value)}
+            >
+              {p.values.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
 
       <label>Photos</label>
       <div className="mb-2 flex flex-wrap gap-2">
