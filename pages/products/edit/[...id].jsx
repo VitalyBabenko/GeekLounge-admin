@@ -28,6 +28,8 @@ export default function EditProductPage() {
           existingTitle={productInfo?.title}
           existingDescription={productInfo?.description}
           existingPrice={productInfo?.price}
+          existingImages={productInfo?.images}
+          existingCategory={productInfo?.category}
         />
       )}
     </Layout>

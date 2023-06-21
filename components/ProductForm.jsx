@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Spinner from "./Spinner";
+import { ReactSortable } from "react-sortablejs";
 
 export default function ProductForm({
   _id,
@@ -8,25 +10,32 @@ export default function ProductForm({
   existingDescription,
   existingPrice,
   existingImages,
+  existingCategory,
 }) {
   const [title, setTitle] = useState(existingTitle || "");
   const [description, setDescription] = useState(existingDescription || "");
   const [price, setPrice] = useState(existingPrice || "");
+  const [category, setCategory] = useState(existingCategory || "");
   const [images, setImages] = useState(existingImages || []);
   const [goToProducts, setGoToProducts] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
   const router = useRouter();
+
+  useEffect(() => {
+    axios.get("/api/categories").then((resp) => setCategories(resp.data));
+  }, []);
 
   const saveProduct = async (e) => {
     e.preventDefault();
-    const newProduct = { title, description, price, images };
+    const newProduct = { title, description, price, images, category };
     if (_id) {
       // update
       await axios.put("/api/products", { ...newProduct, _id });
     } else {
       // create
-      await axios.post("/api/products", newProduct, {
-        headers: { "Content-type": "multipart/form-data" },
-      });
+      await axios.post("/api/products", newProduct);
     }
     setGoToProducts(true);
   };
@@ -34,6 +43,7 @@ export default function ProductForm({
   const uploadImages = async (e) => {
     const files = e.target?.files;
     if (files?.length > 0) {
+      setIsUploading(true);
       const formData = new FormData();
       for (const file of files) {
         formData.append("file", file);
@@ -43,10 +53,13 @@ export default function ProductForm({
       setImages((oldImages) => {
         return [...oldImages, ...data.links];
       });
+      setIsUploading(false);
     }
   };
 
-  console.log({ title, description, price, images });
+  function updateImagesOrder(images) {
+    setImages(images);
+  }
 
   if (goToProducts) {
     router.push("/products");
@@ -61,14 +74,37 @@ export default function ProductForm({
         placeholder="product name"
       />
 
+      <label>Category</label>
+      <select value={category} onChange={(e) => setCategory(e.target.value)}>
+        <option value="">Uncategorized</option>
+        {categories.length > 0 &&
+          categories.map((c) => (
+            <option key={c._id} value={c._id}>
+              {c.name}
+            </option>
+          ))}
+      </select>
+
       <label>Photos</label>
       <div className="mb-2 flex flex-wrap gap-2">
-        {images.length &&
-          images.map((link) => (
-            <div key={link} className="h-24">
-              <img src={link} alt="product image" className="rounded-lg" />
-            </div>
-          ))}
+        <ReactSortable
+          list={images}
+          className="flex flex-wrap gap-2"
+          setList={updateImagesOrder}
+        >
+          {!!images?.length &&
+            images.map((link) => (
+              <div key={link} className="h-24">
+                <img src={link} alt="product image" className="rounded-lg" />
+              </div>
+            ))}
+        </ReactSortable>
+
+        {isUploading && (
+          <div className="h-24 w-24 flex items-center justify-center ">
+            <Spinner />
+          </div>
+        )}
         <div>
           <label className="w-24 h-24 mb-2 cu text cursor-pointer center flex items-center justify-center text-sm gap-1 text-gray-500 rounded-lg bg-gray-200 ">
             <svg
@@ -88,9 +124,6 @@ export default function ProductForm({
             <div>Upload</div>
             <input type="file" hidden onChange={uploadImages} />
           </label>
-          {!images?.length && (
-            <div className="mb-2">No photos in this product</div>
-          )}
         </div>
       </div>
 
