@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import { ReactSortable } from "react-sortablejs";
+import { UploadIcon } from "@/assets/icons";
 
 export default function ProductForm({
   _id,
@@ -118,18 +119,20 @@ export default function ProductForm({
       </select>
       {propertiesToFill.length > 0 &&
         propertiesToFill.map((p) => (
-          <div className="flex gap-1" key={p.name}>
-            <div>{p.name}</div>
-            <select
-              value={productProperties[p.name]}
-              onChange={(e) => setProductProp(p.name, e.target.value)}
-            >
-              {p.values.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
+          <div className="" key={p.name}>
+            <label>{p.name[0].toUpperCase() + p.name.substring(1)}</label>
+            <div>
+              <select
+                value={productProperties[p.name]}
+                onChange={(e) => setProductProp(p.name, e.target.value)}
+              >
+                {p.values.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         ))}
 
@@ -142,7 +145,10 @@ export default function ProductForm({
         >
           {!!images?.length &&
             images.map((link) => (
-              <div key={link} className="h-24">
+              <div
+                key={link}
+                className="h-24 bg-white p-2 shadow-sm rounded-md border border-gray-200"
+              >
                 <img src={link} alt="product image" className="rounded-lg" />
               </div>
             ))}
@@ -154,22 +160,9 @@ export default function ProductForm({
           </div>
         )}
         <div>
-          <label className="w-24 h-24 mb-2 cu text cursor-pointer center flex items-center justify-center text-sm gap-1 text-gray-500 rounded-lg bg-gray-200 ">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-              />
-            </svg>
-            <div>Upload</div>
+          <label className=" w-24 h-24 mb-2  text cursor-pointer center flex flex-col items-center justify-center text-sm gap-1 text-primary rounded-lg bg-white shadow-sm border border-primary ">
+            <UploadIcon />
+            <div>Add image</div>
             <input type="file" hidden onChange={uploadImages} />
           </label>
         </div>
